@@ -12,10 +12,8 @@ import { LocationMap } from './components/LocationMap';
 import { Footer } from './components/Footer';
 import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { Admin } from './components/Admin';
-
 function MainSite() {
-  return (
-    <>
+    return (<>
       <Navbar />
       <main>
         <Hero />
@@ -29,26 +27,18 @@ function MainSite() {
       </main>
       <Footer />
       <FloatingWhatsApp />
-    </>
-  );
+    </>);
 }
-
 function App() {
-  const [route, setRoute] = useState<string>(window.location.hash);
-
-  useEffect(() => {
-    const onHash = () => setRoute(window.location.hash);
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
-
-  const isAdmin = route.startsWith('#admin') || route === '#/admin' || route === '#admin';
-
-  return (
-    <LanguageProvider>
+    const [route, setRoute] = useState(window.location.hash);
+    useEffect(() => {
+        const onHash = () => setRoute(window.location.hash);
+        window.addEventListener('hashchange', onHash);
+        return () => window.removeEventListener('hashchange', onHash);
+    }, []);
+    const isAdmin = route.startsWith('#admin') || route === '#/admin' || route === '#admin';
+    return (<LanguageProvider>
       {isAdmin ? <Admin /> : <MainSite />}
-    </LanguageProvider>
-  );
+    </LanguageProvider>);
 }
-
 export default App;

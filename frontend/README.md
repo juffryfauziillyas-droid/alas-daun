@@ -1,6 +1,7 @@
 # Alas Daun Frontend
 
-Frontend React + TypeScript untuk website RM Alas Daun.
+Frontend React dengan JavaScript (JS/JSX) untuk website RM Alas Daun. Vite
+menjalankan development server dan Tailwind CSS menangani styling.
 
 ## Menjalankan
 
