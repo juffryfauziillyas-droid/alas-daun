@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { config } from 'dotenv';
 import pg from 'pg';
-import { handleMenuApi, isAdminRequest } from './menu-api.js';
+import { handleMenuApi } from './menu-api.js';
 
 config();
 
@@ -57,25 +57,6 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET' && url.pathname === '/api/health/db') {
       const result = await pool.query('SELECT current_database() AS database, now() AS server_time');
       return sendJson(response, 200, { connected: true, ...result.rows[0] });
-    }
-
-    if (request.method === 'POST' && url.pathname === '/api/reservations') {
-      const result = await pool.query(
-        `INSERT INTO reservations (name, phone, date, time, guests, area, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id, name, phone, date, time, guests, area, notes, status, created_at`,
-        [body.name, body.phone, body.date, body.time, body.guests, body.area || null, body.notes || null],
-      );
-      return sendJson(response, 201, { data: result.rows[0] });
-    }
-
-    if (request.method === 'GET' && url.pathname === '/api/reservations') {
-      if (!(await isAdminRequest(request.headers))) return sendJson(response, 401, { error: 'Unauthorized' });
-      const result = await pool.query(
-        `SELECT id, name, phone, date, time, guests, area, notes, status, created_at
-         FROM reservations ORDER BY created_at DESC`,
-      );
-      return sendJson(response, 200, { data: result.rows });
     }
 
     return sendJson(response, 404, { error: 'Not found' });

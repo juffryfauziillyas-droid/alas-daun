@@ -4,16 +4,15 @@
 
 1. Buat project di [Neon](https://neon.tech) dan salin connection string dari
    **Connect**.
-2. Untuk menyiapkan tabel admin dan menu saja, buka **SQL Editor** dan jalankan
-   isi [`menu-admin-schema.sql`](./menu-admin-schema.sql). Alternatif melalui
+2. Buka **SQL Editor** dan jalankan isi
+   [`menu-admin-schema.sql`](./menu-admin-schema.sql). Alternatif melalui
    terminal:
 
    ```bash
    psql "$DATABASE_URL" -f backend/neon/menu-admin-schema.sql
    ```
 
-   [`schema.sql`](./schema.sql) tetap tersedia untuk instalasi yang juga
-   memerlukan tabel reservasi.
+   [`schema.sql`](./schema.sql) menyediakan skema admin dan menu yang sama.
 
 3. Simpan connection string sebagai `DATABASE_URL` hanya di backend atau
    serverless function:
@@ -75,7 +74,7 @@ tersedia dengan penyimpanan folder ini.
 Setelah `backend/.env` sudah diisi dan schema sudah dijalankan:
 
 ```powershell
-cd "D:\arsip magang alas daun\project\backend"
+cd backend
 npm run dev
 ```
 

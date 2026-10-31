@@ -56,7 +56,7 @@ export function MenuSection() {
             window.removeEventListener('keydown', closeOnEscape);
         };
     }, [selectedMenu, showAll]);
-    const displayedItems = menuItems.slice(0, 4);
+    const displayedItems = menuItems.filter((item) => !item.isBestSeller).slice(0, 4);
     const formatPrice = (price) => `Rp ${price.toLocaleString('id-ID')}`;
 
     const renderMenuCard = (m, inGrid = false) => {
@@ -127,7 +127,7 @@ export function MenuSection() {
               aria-label={dict.menu.bestSeller}
               className="no-scrollbar flex gap-4 overflow-x-auto px-1 pb-4"
             >
-              {bestSellerItems.map(renderMenuCard)}
+              {bestSellerItems.map((item) => renderMenuCard(item))}
             </div>
           </div>
         )}

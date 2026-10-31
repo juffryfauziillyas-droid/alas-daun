@@ -38,8 +38,6 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.7s ease-out forwards',
         'fade-up': 'fadeUp 0.7s ease-out forwards',
-        'float': 'float 6s ease-in-out infinite',
-        'shimmer': 'shimmer 2.5s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -49,14 +47,6 @@ export default {
         fadeUp: {
           '0%': { opacity: '0', transform: 'translateY(28px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
         },
       },
       boxShadow: {
