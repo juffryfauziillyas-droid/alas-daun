@@ -1,5 +1,5 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import pg from 'pg';
+import { handleMenuApi, isAdminRequest, writeApiResponse } from '../backend/menu-api.js';
 
 const { Pool } = pg;
 let pool;
@@ -14,45 +14,12 @@ function json(response, status, body) {
   response.status(status).setHeader('Cache-Control', 'no-store').json(body);
 }
 
-function createToken() {
-  const payload = Buffer.from(JSON.stringify({
-    email: process.env.ADMIN_EMAIL,
-    exp: Date.now() + 8 * 60 * 60 * 1000,
-  })).toString('base64url');
-  const signature = createHmac('sha256', process.env.SESSION_SECRET).update(payload).digest('base64url');
-  return `${payload}.${signature}`;
-}
-
-function isValidToken(request) {
-  const value = request.headers.authorization;
-  if (!value?.startsWith('Bearer ')) return false;
-  const [payload, signature] = value.slice(7).split('.');
-  if (!payload || !signature || !process.env.SESSION_SECRET) return false;
-  const expected = createHmac('sha256', process.env.SESSION_SECRET).update(payload).digest();
-  const received = Buffer.from(signature, 'base64url');
-  if (expected.length !== received.length || !timingSafeEqual(expected, received)) return false;
-  try {
-    return JSON.parse(Buffer.from(payload, 'base64url').toString()).exp > Date.now();
-  } catch {
-    return false;
-  }
-}
-
 export default async function handler(request, response) {
   const path = `/api/${Array.isArray(request.query.path) ? request.query.path.join('/') : request.query.path || ''}`;
 
   try {
-    if (request.method === 'POST' && path === '/api/auth/login') {
-      if (request.body?.email !== process.env.ADMIN_EMAIL || request.body?.password !== process.env.ADMIN_PASSWORD) {
-        return json(response, 401, { error: 'Email atau password salah' });
-      }
-      return json(response, 200, { token: createToken() });
-    }
-
-    if (request.method === 'GET' && path === '/api/auth/session') {
-      const authenticated = isValidToken(request);
-      return json(response, authenticated ? 200 : 401, { authenticated });
-    }
+    const menuApiResponse = await handleMenuApi(request, path, request.body || {});
+    if (menuApiResponse) return writeApiResponse(response, menuApiResponse);
 
     if (request.method === 'GET' && path === '/api/health/db') {
       const result = await getPool().query('SELECT current_database() AS database, now() AS server_time');
@@ -71,7 +38,7 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'GET' && path === '/api/reservations') {
-      if (!isValidToken(request)) return json(response, 401, { error: 'Unauthorized' });
+      if (!(await isAdminRequest(request.headers))) return json(response, 401, { error: 'Unauthorized' });
       const result = await getPool().query(
         `SELECT id, name, phone, date, time, guests, area, notes, status, created_at
          FROM reservations ORDER BY created_at DESC`,

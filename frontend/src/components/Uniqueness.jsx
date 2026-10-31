@@ -1,5 +1,5 @@
 import { Leaf, Infinity, Users, Globe2 } from 'lucide-react';
-import { useLang } from '../lib/LanguageContext';
+import { useLang } from '../lib/language-context';
 export function Uniqueness() {
     const { lang, dict } = useLang();
     const features = [
@@ -43,7 +43,7 @@ export function Uniqueness() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f, i) => {
             const Icon = f.icon;
-            return (<div key={i} className="group relative overflow-hidden rounded-2xl bg-white p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:shadow-card" style={{ animationDelay: `${i * 100}ms` }}>
+            return (<div key={i} className="group relative overflow-hidden rounded-2xl bg-krem-50 p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:shadow-card" style={{ animationDelay: `${i * 100}ms` }}>
                 <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-daun-50 transition-transform duration-500 group-hover:scale-150"/>
                 <div className="relative">
                   <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-daun-500 text-krem-100 shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">

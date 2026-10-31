@@ -1,5 +1,5 @@
 import { MapPin, Phone, Clock, Navigation } from 'lucide-react';
-import { useLang } from '../lib/LanguageContext';
+import { useLang } from '../lib/language-context';
 import { restaurantInfo } from '../data/content';
 import { getOpenHoursText } from '../lib/hours';
 const mapsEmbed = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.906963403112!2d107.6251484!3d-6.901729100000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e7b48de20921%3A0xdcb37807c078ca1b!2sAlas%20Daun%20Restaurant!5e0!3m2!1sen!2sid!4v1792995004883!5m2!1sen!2sid';

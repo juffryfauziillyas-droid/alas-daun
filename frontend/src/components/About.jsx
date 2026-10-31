@@ -1,4 +1,4 @@
-import { useLang } from '../lib/LanguageContext';
+import { useLang } from '../lib/language-context';
 export function About() {
     const { lang, dict } = useLang();
     return (<section id="tentang" className="bg-krem-50 py-20">

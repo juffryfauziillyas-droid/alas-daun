@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { useLang } from '../lib/LanguageContext';
+import { useLang } from '../lib/language-context';
 import { galleryImages } from '../data/content';
 export function Gallery() {
     const { dict } = useLang();
@@ -35,7 +35,7 @@ export function Gallery() {
         </div>
 
         <div className="masonry-grid">
-          {galleryImages.map((img, i) => (<button key={i} onClick={() => setLightbox(i)} className="masonry-item group block w-full overflow-hidden rounded-2xl bg-white shadow-soft transition-all duration-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-oranye-400">
+          {galleryImages.map((img, i) => (<button key={i} onClick={() => setLightbox(i)} className="masonry-item group block w-full overflow-hidden rounded-2xl bg-krem-50 shadow-soft transition-all duration-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-oranye-400">
               <img src={img.src} alt={img.alt} loading="lazy" className="w-full transition-transform duration-700 group-hover:scale-105"/>
               <div className="absolute inset-0 bg-daun-900/0 transition-colors duration-300 group-hover:bg-daun-900/20"/>
             </button>))}

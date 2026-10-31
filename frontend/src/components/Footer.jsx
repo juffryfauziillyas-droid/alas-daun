@@ -1,5 +1,5 @@
 import { Leaf, Instagram, Facebook, Youtube, MapPin, Phone, Mail } from 'lucide-react';
-import { useLang } from '../lib/LanguageContext';
+import { useLang } from '../lib/language-context';
 import { restaurantInfo } from '../data/content';
 export function Footer() {
     const { lang, dict } = useLang();
@@ -9,7 +9,6 @@ export function Footer() {
         { href: '#menu', label: dict.nav.menu },
         { href: '#tentang', label: dict.nav.about },
         { href: '#galeri', label: dict.nav.gallery },
-        { href: '#reservasi', label: dict.nav.reservation },
         { href: '#lokasi', label: dict.nav.location },
     ];
     return (<footer id="kontak" className="bg-daun-900 text-krem-100">

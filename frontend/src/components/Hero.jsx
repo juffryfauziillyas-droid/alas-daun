@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { UtensilsCrossed, CalendarCheck, Clock } from 'lucide-react';
-import { useLang } from '../lib/LanguageContext';
+import { UtensilsCrossed, Clock } from 'lucide-react';
+import { useLang } from '../lib/language-context';
 import { isOpenNow } from '../lib/hours';
 export function Hero() {
     const { dict } = useLang();
@@ -22,8 +22,8 @@ export function Hero() {
         {/* Open/Closed badge */}
         <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-krem-100/15 px-4 py-1.5 backdrop-blur-sm ring-1 ring-krem-100/30">
           <span className={`relative flex h-2.5 w-2.5`}>
-            {open && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"/>}
-            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${open ? 'bg-green-400' : 'bg-red-400'}`}/>
+            {open && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-daun-300 opacity-75"/>}
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${open ? 'bg-daun-300' : 'bg-red-400'}`}/>
           </span>
           <span className="font-body text-sm font-medium text-krem-100">
             {open ? dict.hero.open : dict.hero.closed}
@@ -46,9 +46,6 @@ export function Hero() {
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-up">
           <button onClick={() => scrollTo('#menu')} className="btn-accent w-full sm:w-auto">
             <UtensilsCrossed size={18}/> {dict.hero.viewMenu}
-          </button>
-          <button onClick={() => scrollTo('#reservasi')} className="btn-outline w-full border-krem-100/70 text-krem-100 hover:bg-krem-100 hover:text-daun-600 sm:w-auto">
-            <CalendarCheck size={18}/> {dict.hero.reserveNow}
           </button>
         </div>
       </div>

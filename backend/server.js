@@ -1,58 +1,45 @@
 import { createServer } from 'node:http';
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { config } from 'dotenv';
 import pg from 'pg';
+import { handleMenuApi, isAdminRequest } from './menu-api.js';
 
 config();
 
 const { Pool } = pg;
 const port = Number(process.env.PORT || 3001);
 const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
-const adminEmail = process.env.ADMIN_EMAIL;
-const adminPassword = process.env.ADMIN_PASSWORD;
-const sessionSecret = process.env.SESSION_SECRET;
+const MAX_JSON_BODY_BYTES = 4.25 * 1024 * 1024;
 
-if (!process.env.DATABASE_URL || !adminEmail || !adminPassword || !sessionSecret) {
-  throw new Error('DATABASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD, and SESSION_SECRET are required');
+if (!process.env.DATABASE_URL || !process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+  throw new Error('DATABASE_URL and a SESSION_SECRET of at least 32 characters are required');
 }
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 10 });
 
-function sendJson(response, status, body) {
+function sendJson(response, status, body, extraHeaders = {}) {
   response.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': frontendOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    ...extraHeaders,
     Vary: 'Origin',
   });
   response.end(JSON.stringify(body));
 }
 
-function createToken() {
-  const payload = Buffer.from(JSON.stringify({ email: adminEmail, exp: Date.now() + 8 * 60 * 60 * 1000 })).toString('base64url');
-  const signature = createHmac('sha256', sessionSecret).update(payload).digest('base64url');
-  return `${payload}.${signature}`;
-}
-
-function isValidToken(request) {
-  const value = request.headers.authorization;
-  if (!value?.startsWith('Bearer ')) return false;
-  const [payload, signature] = value.slice(7).split('.');
-  if (!payload || !signature) return false;
-  const expected = createHmac('sha256', sessionSecret).update(payload).digest();
-  const received = Buffer.from(signature, 'base64url');
-  if (expected.length !== received.length || !timingSafeEqual(expected, received)) return false;
-  try {
-    return JSON.parse(Buffer.from(payload, 'base64url').toString()).exp > Date.now();
-  } catch {
-    return false;
-  }
-}
-
 async function readJson(request) {
   const chunks = [];
-  for await (const chunk of request) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > MAX_JSON_BODY_BYTES) {
+      const error = new Error('Ukuran request terlalu besar.');
+      error.statusCode = 413;
+      throw error;
+    }
+    chunks.push(chunk);
+  }
   return JSON.parse(Buffer.concat(chunks).toString() || '{}');
 }
 
@@ -60,25 +47,19 @@ const server = createServer(async (request, response) => {
   if (request.method === 'OPTIONS') return sendJson(response, 204, {});
 
   try {
-    if (request.method === 'POST' && request.url === '/api/auth/login') {
-      const body = await readJson(request);
-      if (body.email !== adminEmail || body.password !== adminPassword) {
-        return sendJson(response, 401, { error: 'Email atau password salah' });
-      }
-      return sendJson(response, 200, { token: createToken() });
+    const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+    const body = ['POST', 'PUT'].includes(request.method) ? await readJson(request) : {};
+    const menuApiResponse = await handleMenuApi(request, url.pathname, body);
+    if (menuApiResponse) {
+      return sendJson(response, menuApiResponse.status, menuApiResponse.body, menuApiResponse.headers);
     }
 
-    if (request.method === 'GET' && request.url === '/api/auth/session') {
-      return sendJson(response, isValidToken(request) ? 200 : 401, { authenticated: isValidToken(request) });
-    }
-
-    if (request.method === 'GET' && request.url === '/api/health/db') {
+    if (request.method === 'GET' && url.pathname === '/api/health/db') {
       const result = await pool.query('SELECT current_database() AS database, now() AS server_time');
       return sendJson(response, 200, { connected: true, ...result.rows[0] });
     }
 
-    if (request.method === 'POST' && request.url === '/api/reservations') {
-      const body = await readJson(request);
+    if (request.method === 'POST' && url.pathname === '/api/reservations') {
       const result = await pool.query(
         `INSERT INTO reservations (name, phone, date, time, guests, area, notes)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -88,8 +69,8 @@ const server = createServer(async (request, response) => {
       return sendJson(response, 201, { data: result.rows[0] });
     }
 
-    if (request.method === 'GET' && request.url === '/api/reservations') {
-      if (!isValidToken(request)) return sendJson(response, 401, { error: 'Unauthorized' });
+    if (request.method === 'GET' && url.pathname === '/api/reservations') {
+      if (!(await isAdminRequest(request.headers))) return sendJson(response, 401, { error: 'Unauthorized' });
       const result = await pool.query(
         `SELECT id, name, phone, date, time, guests, area, notes, status, created_at
          FROM reservations ORDER BY created_at DESC`,
@@ -100,7 +81,9 @@ const server = createServer(async (request, response) => {
     return sendJson(response, 404, { error: 'Not found' });
   } catch (error) {
     console.error(error);
-    return sendJson(response, 500, { error: 'Terjadi kesalahan pada server' });
+    return sendJson(response, error.statusCode || 500, {
+      error: error.statusCode === 413 ? error.message : 'Terjadi kesalahan pada server',
+    });
   }
 });
 

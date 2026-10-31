@@ -4,12 +4,16 @@
 
 1. Buat project di [Neon](https://neon.tech) dan salin connection string dari
    **Connect**.
-2. Buka **SQL Editor**, tempel isi [`schema.sql`](./schema.sql), lalu jalankan.
-   Alternatif melalui terminal:
+2. Untuk menyiapkan tabel admin dan menu saja, buka **SQL Editor** dan jalankan
+   isi [`menu-admin-schema.sql`](./menu-admin-schema.sql). Alternatif melalui
+   terminal:
 
    ```bash
-   psql "$DATABASE_URL" -f backend/neon/schema.sql
+   psql "$DATABASE_URL" -f backend/neon/menu-admin-schema.sql
    ```
+
+   [`schema.sql`](./schema.sql) tetap tersedia untuk instalasi yang juga
+   memerlukan tabel reservasi.
 
 3. Simpan connection string sebagai `DATABASE_URL` hanya di backend atau
    serverless function:
@@ -19,12 +23,52 @@
    ```
 
 `DATABASE_URL` tidak boleh diberi awalan `VITE_` dan tidak boleh dikirim ke
-browser. Frontend menggunakan API pada `backend/server.js`, dan API tersebut
-yang terhubung ke Neon menggunakan `DATABASE_URL`.
+browser. Frontend menggunakan API server (`backend/server.js` untuk lokal dan
+`api/[...path].js` untuk Vercel), yang terhubung ke Neon.
 
-Kolom `time` menggunakan tipe PostgreSQL `time`. Jika endpoint menerima nilai
-jam dari form sebagai string seperti `18:00`, PostgreSQL dapat menyimpannya
-langsung ke kolom tersebut.
+## Menyiapkan menu dan admin
+
+Schema membuat tabel `admins` dan `menu_items`. Kategori disimpan sebagai slug
+di kolom `menu_items.category` (contoh `paket-makanan`), sedangkan penanda
+best seller disimpan pada kolom boolean `is_best_seller`. Jalankan schema
+sebelum membuat admin atau mengisi menu.
+
+Salin `backend/.env.example` menjadi `backend/.env`, lalu isi connection string
+database, secret sesi acak minimal 32 karakter, serta kredensial admin awal:
+
+```env
+DATABASE_URL=connection-string-Neon
+SESSION_SECRET=random-secret-minimal-32-karakter
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=password-awal-minimal-12-karakter
+```
+
+`ADMIN_EMAIL` dan `ADMIN_PASSWORD` hanya dipakai oleh skrip provisioning;
+password disimpan sebagai hash scrypt, bukan teks biasa. Dari folder
+`backend`, jalankan:
+
+```bash
+npm install
+npm run admin:create
+npm run menu:seed
+npm run dev
+```
+
+`menu:seed` menyalin daftar menu lama dari frontend satu kali dan membatalkan
+operasi jika tabel sudah berisi data. Setelah itu, perubahan menu dilakukan
+melalui halaman admin, bukan file data statis. Buka `http://localhost:5173/#/admin`
+untuk login dan mengelola menu. API publik `GET /api/menu` hanya mengirim menu
+aktif; endpoint `/api/admin/menu` memerlukan sesi admin.
+
+Pada development lokal, foto dapat dipilih dari komputer. Backend menyimpannya
+di `frontend/public/asset/images/menu`. Jika database menu sudah dibuat sebelum
+dukungan ini ditambahkan, jalankan [`menu-image-path-migration.sql`](./menu-image-path-migration.sql)
+di Neon agar kolom `image_url` menerima path foto lokal.
+
+File sistem lokal tidak persisten di Vercel. Untuk menampilkan foto yang
+diunggah secara lokal pada deployment, commit file gambar dari folder tersebut
+ke repository lalu deploy ulang. Upload langsung dari dashboard Vercel tidak
+tersedia dengan penyimpanan folder ini.
 
 ## Tes koneksi
 
@@ -57,10 +101,13 @@ Tambahkan Environment Variables berikut di Vercel untuk environment
 
 ```text
 DATABASE_URL=connection-string-dari-Neon
-ADMIN_EMAIL=alamat-email-admin
-ADMIN_PASSWORD=password-admin-yang-kuat
 SESSION_SECRET=random-secret-panjang
 ```
+
+Provision akun admin pada database production menggunakan `npm run admin:create`
+dengan `DATABASE_URL`, `ADMIN_EMAIL`, dan `ADMIN_PASSWORD` yang diarahkan ke
+database tersebut. Jangan menyimpan `ADMIN_PASSWORD` sebagai environment
+runtime Vercel.
 
 Jangan menambahkan `DATABASE_URL` sebagai `VITE_*`. Setelah deploy, tes:
 

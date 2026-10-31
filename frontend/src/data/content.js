@@ -33,8 +33,8 @@ export const testimonials = [
         id: 3,
         name: 'Siti Marlina',
         rating: 5,
-        textId: 'Sudah reservasi untuk rombongan 20 orang dan semua puas. Tempatnya nyaman, makanannya melimpah, dan harganya masuk akal. Cocok untuk acara keluarga besar. Wilujeung sumping!',
-        textEn: 'Reserved for a group of 20 and everyone was satisfied. The place is comfortable, food is abundant, and prices are fair. Perfect for big family events. Welcome!',
+        textId: 'Datang bersama rombongan 20 orang dan semua puas. Tempatnya nyaman, makanannya melimpah, dan harganya masuk akal. Cocok untuk acara keluarga besar. Wilujeung sumping!',
+        textEn: 'Visited with a group of 20 and everyone was satisfied. The place is comfortable, food is abundant, and prices are fair. Perfect for big family events. Welcome!',
         avatar: 'https://images.pexels.com/photos/36363436/pexels-photo-36363436.jpeg?auto=compress&cs=tinysrgb&h=120&w=120',
     },
 ];

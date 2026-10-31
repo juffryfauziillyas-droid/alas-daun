@@ -1,21 +1,112 @@
-import { useState, useMemo } from 'react';
-import { Search, Star } from 'lucide-react';
-import { useLang } from '../lib/LanguageContext';
-import { menuItems, categoryLabels } from '../data/menu';
-import { restaurantInfo } from '../data/content';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { ArrowRight, Star, X } from 'lucide-react';
+import { useLang } from '../lib/language-context';
+import { categoryLabels } from '../data/menu';
+import { apiRequest } from '../lib/api';
 export function MenuSection() {
     const { lang, dict } = useLang();
     const [active, setActive] = useState('all');
-    const [query, setQuery] = useState('');
-    const categories = Object.keys(categoryLabels);
-    const filtered = useMemo(() => {
-        return menuItems.filter((m) => {
-            const matchCat = active === 'all' || m.category === active;
-            const q = query.trim().toLowerCase();
-            const matchQuery = !q || m.name.toLowerCase().includes(q) || m.descriptionId.toLowerCase().includes(q);
-            return matchCat && matchQuery;
-        });
-    }, [active, query]);
+    const [menuItems, setMenuItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [showAll, setShowAll] = useState(false);
+    const [selectedMenu, setSelectedMenu] = useState(null);
+    useEffect(() => {
+        let cancelled = false;
+        apiRequest('/api/menu')
+            .then((result) => {
+                if (!cancelled) setMenuItems(result.data);
+            })
+            .catch((requestError) => {
+                if (!cancelled) setError(requestError.message);
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+    const categoryName = (category) => {
+        const label = categoryLabels[category];
+        return label ? (lang === 'id' ? label.id : label.en) : category.replaceAll('-', ' ');
+    };
+    const categories = [...new Set(menuItems.map((item) => item.category))];
+    const bestSellerItems = menuItems.filter((item) => item.isBestSeller);
+    const filteredAll = useMemo(() => (
+        menuItems.filter((item) => {
+            if (active === 'best-seller') return item.isBestSeller;
+            return active === 'all' || item.category === active;
+        })
+    ), [active, menuItems]);
+    useEffect(() => {
+        if (!selectedMenu && !showAll) return undefined;
+        const previousOverflow = document.body.style.overflow;
+        const closeOnEscape = (event) => {
+            if (event.key === 'Escape') {
+                if (selectedMenu) setSelectedMenu(null);
+                else setShowAll(false);
+            }
+        };
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [selectedMenu, showAll]);
+    const displayedItems = menuItems.slice(0, 4);
+    const formatPrice = (price) => `Rp ${price.toLocaleString('id-ID')}`;
+
+    const renderMenuCard = (m, inGrid = false) => {
+        const promoPrice = m.promo ? Math.round(m.price * (1 - m.promo / 100)) : null;
+        return (
+          <button
+            type="button"
+            key={m.id}
+            onClick={() => setSelectedMenu(m)}
+            aria-label={`${m.name} - ${lang === 'id' ? 'lihat detail menu' : 'view menu details'}`}
+            className={`group flex ${inGrid ? 'w-full min-w-0' : 'w-72 flex-none'} flex-col overflow-hidden rounded-2xl bg-krem-50 text-left shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-daun-500 focus-visible:ring-offset-2`}
+          >
+            <div className="relative h-36 w-full overflow-hidden">
+              <img src={m.image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+              <div className="absolute inset-0 bg-gradient-to-t from-daun-900/40 to-transparent"/>
+              {(m.isBestSeller || m.isNew) && (
+                <span className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1 font-body text-xs font-semibold shadow-soft ${m.isBestSeller ? 'bg-oranye-500 text-white' : 'bg-daun-500 text-krem-100'}`}>
+                  {m.isBestSeller && <Star size={12} fill="currentColor"/>}
+                  {m.isBestSeller ? dict.menu.bestSeller : dict.menu.baru}
+                </span>
+              )}
+              {m.promo && (
+                <span className="absolute right-3 top-3 rounded-full bg-oranye-500 px-3 py-1 font-body text-xs font-bold text-white shadow-soft">
+                  -{m.promo}%
+                </span>
+              )}
+            </div>
+            <div className="flex min-h-32 flex-1 flex-col p-4">
+              <h3 className="mb-1.5 font-heading text-base font-bold text-daun-700">{m.name}</h3>
+              <p className="mb-3 line-clamp-2 flex-1 font-body text-xs leading-relaxed text-daun-800/70">
+                {lang === 'id' ? m.descriptionId : m.descriptionEn}
+              </p>
+              <div className="flex items-end justify-between gap-2">
+                <div className="flex flex-col">
+                  {promoPrice && (
+                    <span className="font-body text-xs text-daun-500 line-through">{formatPrice(m.price)}</span>
+                  )}
+                  <span className={`font-heading text-base font-bold ${promoPrice ? 'text-oranye-600' : 'text-daun-600'}`}>
+                    {formatPrice(promoPrice || m.price)}
+                  </span>
+                </div>
+                <span className="rounded-full bg-daun-50 px-2.5 py-1 font-body text-xs font-medium text-daun-500">
+                  {categoryName(m.category)}
+                </span>
+              </div>
+            </div>
+          </button>
+        );
+    };
+
     return (<section id="menu" className="bg-krem-50 py-20">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-10 text-center">
@@ -24,72 +115,158 @@ export function MenuSection() {
           <div className="mx-auto h-1 w-20 rounded-full bg-oranye-500"/>
         </div>
 
-        {/* Search */}
-        <div className="mx-auto mb-8 max-w-md">
-          <div className="relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-daun-400"/>
-            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={dict.menu.search} className="w-full rounded-full border border-daun-200 bg-white py-3 pl-12 pr-4 font-body text-sm text-daun-700 shadow-soft outline-none transition focus:border-daun-500 focus:ring-2 focus:ring-daun-200"/>
+        {!loading && !error && bestSellerItems.length > 0 && (
+          <div className="mb-12">
+            <div className="mb-5 flex items-center justify-center gap-2">
+              <Star size={18} fill="currentColor" className="text-oranye-500"/>
+              <h3 className="font-heading text-2xl font-bold text-daun-700">
+                {dict.menu.bestSeller}
+              </h3>
+            </div>
+            <div
+              aria-label={dict.menu.bestSeller}
+              className="no-scrollbar flex gap-4 overflow-x-auto px-1 pb-4"
+            >
+              {bestSellerItems.map(renderMenuCard)}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Category filter */}
-        <div className="no-scrollbar mb-10 flex justify-start gap-2 overflow-x-auto pb-2 lg:justify-center">
-          <button onClick={() => setActive('all')} className={`whitespace-nowrap rounded-full px-5 py-2 font-body text-sm font-medium transition ${active === 'all' ? 'bg-daun-500 text-krem-100 shadow-soft' : 'bg-white text-daun-600 hover:bg-daun-50'}`}>
-            {dict.menu.all}
-          </button>
-          {categories.map((c) => (<button key={c} onClick={() => setActive(c)} className={`whitespace-nowrap rounded-full px-5 py-2 font-body text-sm font-medium transition ${active === c ? 'bg-daun-500 text-krem-100 shadow-soft' : 'bg-white text-daun-600 hover:bg-daun-50'}`}>
-              {lang === 'id' ? categoryLabels[c].id : categoryLabels[c].en}
-            </button>))}
-        </div>
-
-        {/* Grid */}
-        {filtered.length === 0 ? (<p className="py-10 text-center font-body text-daun-500">—</p>) : (<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((m) => {
-                const promoPrice = m.promo ? Math.round(m.price * (1 - m.promo / 100)) : null;
-                return (<article key={m.id} className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-soft transition-all duration-500 hover:-translate-y-1.5 hover:shadow-card">
-                  <div className="relative h-52 overflow-hidden">
-                    <img src={m.image} alt={m.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"/>
-                    <div className="absolute inset-0 bg-gradient-to-t from-daun-900/40 to-transparent"/>
-                    {m.badge && (<span className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1 font-body text-xs font-semibold shadow-soft ${m.badge === 'Best Seller' ? 'bg-oranye-500 text-white' : 'bg-daun-500 text-krem-100'}`}>
-                        {m.badge === 'Best Seller' && <Star size={12} fill="currentColor"/>}
-                        {m.badge === 'Best Seller' ? dict.menu.bestSeller : dict.menu.baru}
-                      </span>)}
-                    {m.promo && (<span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 font-body text-xs font-bold text-white shadow-soft">
-                        -{m.promo}%
-                      </span>)}
-                  </div>
-                  <div className="flex flex-1 flex-col p-5">
-                    <h3 className="mb-1.5 font-heading text-lg font-bold text-daun-700">{m.name}</h3>
-                    <p className="mb-4 flex-1 font-body text-sm leading-relaxed text-daun-800/70">
-                      {lang === 'id' ? m.descriptionId : m.descriptionEn}
-                    </p>
-                    <div className="flex items-end justify-between">
-                      <div className="flex flex-col">
-                        {promoPrice ? (<>
-                            <span className="font-body text-xs text-daun-500 line-through">
-                              Rp {m.price.toLocaleString('id-ID')}
-                            </span>
-                            <span className="font-heading text-lg font-bold text-oranye-600">
-                              Rp {promoPrice.toLocaleString('id-ID')}
-                            </span>
-                          </>) : (<span className="font-heading text-lg font-bold text-daun-600">
-                            Rp {m.price.toLocaleString('id-ID')}
-                          </span>)}
-                      </div>
-                      <span className="rounded-full bg-daun-50 px-3 py-1 font-body text-xs font-medium text-daun-500">
-                        {lang === 'id' ? categoryLabels[m.category].id : categoryLabels[m.category].en}
-                      </span>
-                    </div>
-                  </div>
-                </article>);
-            })}
+        {/* Menu cards */}
+        {error ? (<p role="alert" className="py-10 text-center font-body text-red-700">{error}</p>) : loading ? (
+            <p className="py-10 text-center font-body text-daun-500">Memuat daftar menu...</p>
+        ) : menuItems.length === 0 ? (<p className="py-10 text-center font-body text-daun-500">Menu belum tersedia.</p>) : (<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="no-scrollbar col-span-full flex gap-4 overflow-x-auto px-1 pb-4">
+              {displayedItems.map((item) => renderMenuCard(item))}
+            </div>
+            <div className="col-span-full mt-5 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="group btn-accent px-7 py-3.5 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 sm:text-base"
+              >
+                {lang === 'id' ? 'Lihat menu lainnya' : 'View all menu'}
+                <ArrowRight size={18} aria-hidden="true" className="transition-transform group-hover:translate-x-1"/>
+              </button>
+            </div>
           </div>)}
 
-        <p className="mt-10 text-center font-body text-sm text-daun-600/70">
-          {lang === 'id'
-            ? `Nasi & kuah boleh nambah. Harga dapat berubah sewaktu-waktu. Reservasi: ${restaurantInfo.phone}`
-            : `Unlimited rice & gravy. Prices subject to change. Reservations: ${restaurantInfo.phone}`}
-        </p>
       </div>
+      {showAll && createPortal(
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-daun-900/70 p-3 backdrop-blur-sm sm:p-6"
+          onClick={() => setShowAll(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="all-menu-title"
+            className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-krem-50 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-daun-100 px-5 py-4 sm:px-7">
+              <h3 id="all-menu-title" className="font-heading text-xl font-bold text-daun-700 sm:text-2xl">
+                {lang === 'id' ? 'Semua Menu' : 'All Menu'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAll(false)}
+                aria-label={lang === 'id' ? 'Tutup semua menu' : 'Close all menu'}
+                className="rounded-full p-2 text-daun-700 transition hover:bg-daun-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-daun-500"
+              >
+                <X size={20}/>
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 sm:p-7">
+              <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-2">
+                {bestSellerItems.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActive('best-seller')}
+                    aria-pressed={active === 'best-seller'}
+                    className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-2 font-body text-sm font-medium transition ${active === 'best-seller' ? 'bg-oranye-500 text-white shadow-soft' : 'bg-daun-50 text-daun-600 hover:bg-daun-100'}`}
+                  >
+                    <Star size={14} fill="currentColor"/>
+                    {dict.menu.bestSeller}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setActive('all')}
+                  aria-pressed={active === 'all'}
+                  className={`whitespace-nowrap rounded-full px-4 py-2 font-body text-sm font-medium transition ${active === 'all' ? 'bg-daun-500 text-krem-100 shadow-soft' : 'bg-daun-50 text-daun-600 hover:bg-daun-100'}`}
+                >
+                  {dict.menu.all}
+                </button>
+                {categories.map((category) => (
+                  <button
+                    type="button"
+                    key={category}
+                    onClick={() => setActive(category)}
+                    aria-pressed={active === category}
+                    className={`whitespace-nowrap rounded-full px-4 py-2 font-body text-sm font-medium transition ${active === category ? 'bg-daun-500 text-krem-100 shadow-soft' : 'bg-daun-50 text-daun-600 hover:bg-daun-100'}`}
+                  >
+                    {categoryName(category)}
+                  </button>
+                ))}
+              </div>
+              {filteredAll.length === 0 ? (
+                <p className="py-10 text-center font-body text-daun-500">Menu belum tersedia.</p>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredAll.map((item) => renderMenuCard(item, true))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+      {selectedMenu && createPortal(
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-daun-900/70 p-4 backdrop-blur-sm"
+          onClick={() => setSelectedMenu(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="menu-detail-title"
+            className="relative my-auto grid w-full max-w-3xl overflow-hidden rounded-3xl bg-krem-50 shadow-2xl md:grid-cols-2"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedMenu(null)}
+              aria-label={lang === 'id' ? 'Tutup detail menu' : 'Close menu details'}
+              className="absolute right-3 top-3 z-10 rounded-full bg-krem-50/95 p-2 text-daun-700 shadow-soft transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-daun-500"
+            >
+              <X size={20}/>
+            </button>
+            <img src={selectedMenu.image} alt={selectedMenu.name} className="h-64 w-full object-cover md:h-full md:min-h-96"/>
+            <div className="flex flex-col p-6 sm:p-8">
+              <span className="mb-3 w-fit rounded-full bg-daun-50 px-3 py-1 font-body text-xs font-medium text-daun-600">
+                {categoryName(selectedMenu.category)}
+              </span>
+              <h3 id="menu-detail-title" className="mb-4 font-heading text-2xl font-bold text-daun-700">
+                {selectedMenu.name}
+              </h3>
+              <p className="mb-6 flex-1 font-body text-sm leading-relaxed text-daun-800/80">
+                {lang === 'id' ? selectedMenu.descriptionId : selectedMenu.descriptionEn}
+              </p>
+              <div className="flex items-end gap-3">
+                {selectedMenu.promo && (
+                  <span className="font-body text-sm text-daun-500 line-through">{formatPrice(selectedMenu.price)}</span>
+                )}
+                <span className="font-heading text-xl font-bold text-oranye-600">
+                  {formatPrice(selectedMenu.promo
+                    ? Math.round(selectedMenu.price * (1 - selectedMenu.promo / 100))
+                    : selectedMenu.price)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </section>);
 }

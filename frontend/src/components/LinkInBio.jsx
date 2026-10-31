@@ -34,7 +34,7 @@ function LinkButton({ href, icon: Icon, label, featured = false }) {
   const content = (
     <>
       {featured && (
-        <span className="absolute inset-0 translate-y-full bg-white/15 transition-transform duration-300 group-hover:translate-y-0" />
+        <span className="absolute inset-0 translate-y-full bg-krem-50/15 transition-transform duration-300 group-hover:translate-y-0" />
       )}
       <Icon
         size={featured ? 21 : 22}
@@ -157,7 +157,7 @@ export function LinkInBio() {
 
         <section className="mb-8 w-full" aria-labelledby="contact-links-heading">
           <SectionHeading>
-            <span id="contact-links-heading">Reservasi &amp; Informasi</span>
+            <span id="contact-links-heading">Informasi &amp; Kontak</span>
           </SectionHeading>
           <div className="flex flex-col gap-3">
             {contactLinks.map((link) => (

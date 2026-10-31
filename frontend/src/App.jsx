@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LanguageProvider } from './lib/LanguageContext';
+import { Admin } from './components/Admin';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Uniqueness } from './components/Uniqueness';
@@ -7,36 +8,41 @@ import { MenuSection } from './components/MenuSection';
 import { About } from './components/About';
 import { Gallery } from './components/Gallery';
 import { Testimonials } from './components/Testimonials';
-import { Reservation } from './components/Reservation';
 import { LocationMap } from './components/LocationMap';
 import { Footer } from './components/Footer';
-import { FloatingWhatsApp } from './components/FloatingWhatsApp';
-import { Admin } from './components/Admin';
+import { AnimatedSection } from './components/AnimatedSection';
 function MainSite() {
     return (<>
       <Navbar />
       <main>
-        <Hero />
-        <Uniqueness />
-        <MenuSection />
-        <About />
-        <Gallery />
-        <Testimonials />
-        <Reservation />
-        <LocationMap />
+        <AnimatedSection><Hero /></AnimatedSection>
+        <AnimatedSection delay={0.05}><Uniqueness /></AnimatedSection>
+        <AnimatedSection><MenuSection /></AnimatedSection>
+        <AnimatedSection delay={0.05}><About /></AnimatedSection>
+        <AnimatedSection><Gallery /></AnimatedSection>
+        <AnimatedSection delay={0.05}><Testimonials /></AnimatedSection>
+        <AnimatedSection><LocationMap /></AnimatedSection>
       </main>
-      <Footer />
-      <FloatingWhatsApp />
+      <AnimatedSection><Footer /></AnimatedSection>
     </>);
 }
 function App() {
-    const [route, setRoute] = useState(window.location.hash);
+    const [isAdmin, setIsAdmin] = useState(() => {
+        return window.location.pathname === '/admin' || /^#\/?admin(?:$|\/)/.test(window.location.hash);
+    });
+
     useEffect(() => {
-        const onHash = () => setRoute(window.location.hash);
-        window.addEventListener('hashchange', onHash);
-        return () => window.removeEventListener('hashchange', onHash);
+        const updateRoute = () => {
+            setIsAdmin(window.location.pathname === '/admin' || /^#\/?admin(?:$|\/)/.test(window.location.hash));
+        };
+        window.addEventListener('hashchange', updateRoute);
+        window.addEventListener('popstate', updateRoute);
+        return () => {
+            window.removeEventListener('hashchange', updateRoute);
+            window.removeEventListener('popstate', updateRoute);
+        };
     }, []);
-    const isAdmin = route.startsWith('#admin') || route === '#/admin' || route === '#admin';
+
     return (<LanguageProvider>
       {isAdmin ? <Admin /> : <MainSite />}
     </LanguageProvider>);

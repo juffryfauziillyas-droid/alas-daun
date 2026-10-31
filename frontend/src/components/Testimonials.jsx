@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useLang } from '../lib/LanguageContext';
+import { useLang } from '../lib/language-context';
 import { testimonials } from '../data/content';
 export function Testimonials() {
     const { lang, dict } = useLang();
