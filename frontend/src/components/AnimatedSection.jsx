@@ -1,16 +1,37 @@
-import { motion, useReducedMotion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 
 export function AnimatedSection({ children, delay = 0 }) {
-  const shouldReduceMotion = useReducedMotion();
+  const sectionRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return undefined;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      || !('IntersectionObserver' in window)) {
+      setIsVisible(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        observer.unobserve(entry.target);
+      }
+    }, { threshold: 0.15 });
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 24 }}
-      whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay }}
+    <div
+      ref={sectionRef}
+      className={`animated-section${isVisible ? ' is-visible' : ''}`}
+      style={{ '--reveal-delay': `${delay}s` }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

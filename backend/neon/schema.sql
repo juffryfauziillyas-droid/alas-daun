@@ -2,8 +2,8 @@
 -- Run this file in the Neon SQL Editor or with:
 -- psql "$DATABASE_URL" -f neon/schema.sql
 --
--- Keep DATABASE_URL on a server or serverless function. Never expose it as a
--- VITE_* variable because the Vite bundle is public.
+-- Keep DATABASE_URL on the backend. Never expose it as a VITE_* variable
+-- because the Vite bundle is public.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 

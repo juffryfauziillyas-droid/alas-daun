@@ -14,16 +14,15 @@
 
    [`schema.sql`](./schema.sql) menyediakan skema admin dan menu yang sama.
 
-3. Simpan connection string sebagai `DATABASE_URL` hanya di backend atau
-   serverless function:
+3. Simpan connection string sebagai `DATABASE_URL` hanya di backend:
 
    ```env
    DATABASE_URL=postgresql://user:password@ep-example.ap-southeast-1.aws.neon.tech/dbname?sslmode=require
    ```
 
 `DATABASE_URL` tidak boleh diberi awalan `VITE_` dan tidak boleh dikirim ke
-browser. Frontend menggunakan API server (`backend/server.js` untuk lokal dan
-`api/[...path].js` untuk Vercel), yang terhubung ke Neon.
+browser. Frontend menggunakan API lokal di `backend/server.js`, yang terhubung
+ke Neon.
 
 ## Menyiapkan menu dan admin
 
@@ -64,10 +63,8 @@ di `frontend/public/asset/images/menu`. Jika database menu sudah dibuat sebelum
 dukungan ini ditambahkan, jalankan [`menu-image-path-migration.sql`](./menu-image-path-migration.sql)
 di Neon agar kolom `image_url` menerima path foto lokal.
 
-File sistem lokal tidak persisten di Vercel. Untuk menampilkan foto yang
-diunggah secara lokal pada deployment, commit file gambar dari folder tersebut
-ke repository lalu deploy ulang. Upload langsung dari dashboard Vercel tidak
-tersedia dengan penyimpanan folder ini.
+Foto yang diunggah disimpan di `frontend/public/asset/images/menu`; pastikan
+folder tersebut tetap tersedia saat memindahkan atau mencadangkan proyek.
 
 ## Tes koneksi
 
@@ -87,31 +84,3 @@ Invoke-RestMethod http://localhost:3001/api/health/db
 Jika berhasil, hasilnya memiliki `connected: True`, nama database Neon, dan
 waktu server PostgreSQL. Jika gagal, periksa `DATABASE_URL`, pastikan schema
 dan project Neon aktif, lalu lihat pesan error pada terminal backend.
-
-## Deploy ke Vercel
-
-Import repository/project ini ke Vercel dengan **Root Directory** tetap di
-root project, bukan `frontend` atau `backend`. Konfigurasi pada `vercel.json`
-akan membuild frontend dan memakai `api/[...path].js` sebagai Vercel
-Serverless Function.
-
-Tambahkan Environment Variables berikut di Vercel untuk environment
-`Production` dan `Preview`:
-
-```text
-DATABASE_URL=connection-string-dari-Neon
-SESSION_SECRET=random-secret-panjang
-```
-
-Provision akun admin pada database production menggunakan `npm run admin:create`
-dengan `DATABASE_URL`, `ADMIN_EMAIL`, dan `ADMIN_PASSWORD` yang diarahkan ke
-database tersebut. Jangan menyimpan `ADMIN_PASSWORD` sebagai environment
-runtime Vercel.
-
-Jangan menambahkan `DATABASE_URL` sebagai `VITE_*`. Setelah deploy, tes:
-
-```text
-https://domain-vercel-anda.vercel.app/api/health/db
-```
-
-Frontend otomatis memakai URL `/api` dari domain Vercel yang sama.

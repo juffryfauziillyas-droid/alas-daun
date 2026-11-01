@@ -35,6 +35,26 @@
   background: #1E3E2B;
 }
 
+.animated-section {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.65s ease-out var(--reveal-delay, 0s),
+    transform 0.65s ease-out var(--reveal-delay, 0s);
+}
+.animated-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animated-section,
+  .animated-section.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 @layer components {
   .leaf-divider {
     height: 48px;
@@ -57,6 +77,13 @@
 /* Hide scrollbar for chat quick replies */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.menu-horizontal-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-color: #86A760 #FDF8EC;
+  scrollbar-width: thin;
+}
+.menu-horizontal-scroll::-webkit-scrollbar { height: 6px; }
 
 /* Masonry */
 .masonry-grid {

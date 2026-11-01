@@ -67,11 +67,11 @@ export function MenuSection() {
             key={m.id}
             onClick={() => setSelectedMenu(m)}
             aria-label={`${m.name} - ${lang === 'id' ? 'lihat detail menu' : 'view menu details'}`}
-            className={`group flex ${inGrid ? 'w-full min-w-0' : 'w-72 flex-none'} flex-col overflow-hidden rounded-2xl bg-krem-50 text-left shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-daun-500 focus-visible:ring-offset-2`}
+            className={`group flex ${inGrid ? 'w-full min-w-0' : 'w-72 flex-none'} transform-gpu flex-col overflow-hidden rounded-2xl border border-transparent bg-krem-50 text-left shadow-soft transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:border-oranye-300 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-daun-500 focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none`}
           >
             <div className="relative h-36 w-full overflow-hidden">
-              <img src={m.image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-              <div className="absolute inset-0 bg-gradient-to-t from-daun-900/40 to-transparent"/>
+              <img src={m.image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 motion-reduce:transition-none"/>
+              <div className="absolute inset-0 bg-gradient-to-t from-daun-900/50 via-transparent to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100"/>
               {(m.isBestSeller || m.isNew) && (
                 <span className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1 font-body text-xs font-semibold shadow-soft ${m.isBestSeller ? 'bg-oranye-500 text-white' : 'bg-daun-500 text-krem-100'}`}>
                   {m.isBestSeller && <Star size={12} fill="currentColor"/>}
@@ -85,7 +85,7 @@ export function MenuSection() {
               )}
             </div>
             <div className="flex min-h-32 flex-1 flex-col p-4">
-              <h3 className="mb-1.5 font-heading text-base font-bold text-daun-700">{m.name}</h3>
+              <h3 className="mb-1.5 font-heading text-base font-bold text-daun-700 transition-colors duration-300 group-hover:text-oranye-600">{m.name}</h3>
               <p className="mb-3 line-clamp-2 flex-1 font-body text-xs leading-relaxed text-daun-800/70">
                 {lang === 'id' ? m.descriptionId : m.descriptionEn}
               </p>
@@ -125,7 +125,7 @@ export function MenuSection() {
             </div>
             <div
               aria-label={dict.menu.bestSeller}
-              className="no-scrollbar flex gap-4 overflow-x-auto px-1 pb-4"
+              className="menu-horizontal-scroll flex snap-x snap-mandatory touch-pan-x gap-4 overflow-x-auto px-1 pb-4"
             >
               {bestSellerItems.map((item) => renderMenuCard(item))}
             </div>
@@ -231,7 +231,7 @@ export function MenuSection() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="menu-detail-title"
-            className="relative my-auto grid w-full max-w-3xl overflow-hidden rounded-3xl bg-krem-50 shadow-2xl md:grid-cols-2"
+            className="relative my-auto flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-krem-50 shadow-2xl md:flex-row"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -242,8 +242,10 @@ export function MenuSection() {
             >
               <X size={20}/>
             </button>
-            <img src={selectedMenu.image} alt={selectedMenu.name} className="h-64 w-full object-cover md:h-full md:min-h-96"/>
-            <div className="flex flex-col p-6 sm:p-8">
+            <div className="flex max-h-[40vh] w-full shrink-0 items-center justify-center bg-daun-900/5 md:max-h-[85vh] md:w-auto md:max-w-[60%]">
+              <img src={selectedMenu.image} alt={selectedMenu.name} className="h-auto w-auto max-h-[40vh] max-w-full object-contain md:max-h-[85vh]"/>
+            </div>
+            <div className="flex min-h-0 flex-col overflow-y-auto p-6 sm:p-8 md:flex-1">
               <span className="mb-3 w-fit rounded-full bg-daun-50 px-3 py-1 font-body text-xs font-medium text-daun-600">
                 {categoryName(selectedMenu.category)}
               </span>

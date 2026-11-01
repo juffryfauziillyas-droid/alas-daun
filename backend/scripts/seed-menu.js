@@ -16,14 +16,14 @@ try {
   connected = true;
   await client.query('BEGIN');
   inTransaction = true;
-  const existing = await client.query('SELECT count(*)::int AS count FROM menu_items');
+  const existing = await client.query('SELECT count(*)::int AS count FROM public.menu_items');
   if (existing.rows[0].count > 0) {
     throw new Error('menu_items sudah berisi data. Seed dibatalkan agar data admin tidak tertimpa.');
   }
 
   for (const [index, item] of menuItems.entries()) {
     await client.query(
-      `INSERT INTO menu_items
+      `INSERT INTO public.menu_items
         (name, category, price, description_id, description_en, image_url,
          is_best_seller, is_new, promo, sort_order)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,

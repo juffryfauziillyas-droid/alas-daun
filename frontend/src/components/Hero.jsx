@@ -13,7 +13,7 @@ export function Hero() {
     return (<section id="beranda" className="relative flex min-h-screen items-center justify-center overflow-hidden">
       {/* Background image with overlay */}
       <div className="absolute inset-0">
-        <img src="https://images.pexels.com/photos/37303212/pexels-photo-37303212.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="Hidangan Indonesia di atas daun pisang" className="h-full w-full object-cover" loading="eager" fetchPriority="high"/>
+        <img src="https://images.pexels.com/photos/37303212/pexels-photo-37303212.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="Hidangan Indonesia di atas daun pisang" className="h-full w-full object-cover" loading="eager" fetchpriority="high"/>
         <div className="absolute inset-0 bg-gradient-to-b from-daun-900/70 via-daun-800/55 to-daun-900/80"/>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_30%,_rgba(14,27,17,0.6)_100%)]"/>
       </div>

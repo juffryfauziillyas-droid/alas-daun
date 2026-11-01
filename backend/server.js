@@ -1,11 +1,9 @@
 import { createServer } from 'node:http';
 import { config } from 'dotenv';
-import pg from 'pg';
-import { handleMenuApi } from './menu-api.js';
+import { dispatchApiRoute } from './routes/api-routes.js';
 
 config();
 
-const { Pool } = pg;
 const port = Number(process.env.PORT || 3001);
 const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 const MAX_JSON_BODY_BYTES = 4.25 * 1024 * 1024;
@@ -13,8 +11,6 @@ const MAX_JSON_BODY_BYTES = 4.25 * 1024 * 1024;
 if (!process.env.DATABASE_URL || !process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
   throw new Error('DATABASE_URL and a SESSION_SECRET of at least 32 characters are required');
 }
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 10 });
 
 function sendJson(response, status, body, extraHeaders = {}) {
   response.writeHead(status, {
@@ -49,14 +45,9 @@ const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
     const body = ['POST', 'PUT'].includes(request.method) ? await readJson(request) : {};
-    const menuApiResponse = await handleMenuApi(request, url.pathname, body);
-    if (menuApiResponse) {
-      return sendJson(response, menuApiResponse.status, menuApiResponse.body, menuApiResponse.headers);
-    }
-
-    if (request.method === 'GET' && url.pathname === '/api/health/db') {
-      const result = await pool.query('SELECT current_database() AS database, now() AS server_time');
-      return sendJson(response, 200, { connected: true, ...result.rows[0] });
+    const apiResponse = await dispatchApiRoute(request, url.pathname, body);
+    if (apiResponse) {
+      return sendJson(response, apiResponse.status, apiResponse.body, apiResponse.headers);
     }
 
     return sendJson(response, 404, { error: 'Not found' });

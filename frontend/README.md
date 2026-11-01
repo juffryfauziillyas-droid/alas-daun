@@ -10,10 +10,6 @@ npm install
 npm run dev
 ```
 
-Untuk deploy ke Vercel, gunakan folder root project ini sebagai **Root
-Directory**. Vercel akan membuild `frontend` dan menjalankan endpoint Neon
-secara serverless.
-
 Backend Node.js dan database Neon tetap berada di repository. Untuk
 menjalankan backend secara terpisah:
 

@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import pg from 'pg';
-import { newPasswordHash } from '../menu-api.js';
+import { newPasswordHash } from '../controllers/auth-controller.js';
 
 config();
 
@@ -20,7 +20,7 @@ try {
   await client.connect();
   connected = true;
   await client.query(
-    `INSERT INTO admins (email, password_hash) VALUES ($1, $2)
+    `INSERT INTO public.admins (email, password_hash) VALUES ($1, $2)
      ON CONFLICT (lower(email)) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
     [email, passwordHash],
   );
